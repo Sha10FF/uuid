@@ -1,0 +1,25 @@
+{
+  "name": "flamsu/uuid",
+  "type": "library",
+  "license": "WTFPL",
+  "description": "Simple TimeUUID and UUID library for distributed architecture",
+  "authors": [
+    {
+      "name": "Flam",
+      "email": "i@flam.su"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.2.0",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8"
+  },
+  "autoload": {
+    "psr-4": {
+      "UUID\\": "src/"
+    }
+  }
+}
