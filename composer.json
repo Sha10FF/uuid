@@ -1,12 +1,12 @@
 {
-  "name": "flamsu/uuid",
+  "name": "sha10ff/uuid",
   "type": "library",
   "license": "WTFPL",
   "description": "Simple TimeUUID and UUID library for distributed architecture",
   "authors": [
     {
-      "name": "Flam",
-      "email": "i@flam.su"
+      "name": "Dmitry Shalov",
+      "email": "d@sha1.su"
     }
   ],
   "minimum-stability": "dev",
