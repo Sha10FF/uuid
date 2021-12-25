@@ -18,13 +18,6 @@ class MicroUuid implements JsonSerializable
     /**
      * @var int
      * 16bit
-     * SERVER_ID=[0-65535] in /etc/environment
-     */
-    public static $defaultServer;
-
-    /**
-     * @var int
-     * 16bit
      * seconds since 1970-01-01 00:00:00 UTC to 2106-02-07 06:28:15 UTC
      */
     protected $secondsLow;
@@ -63,23 +56,6 @@ class MicroUuid implements JsonSerializable
      */
     protected $server;
 
-    protected function __construct(
-        int $secondsHigh,
-        int $secondsLow,
-        int $micros,
-        int $seq,
-        int $pid,
-        int $server
-    )
-    {
-        $this->secondsHigh = $secondsHigh;
-        $this->secondsLow = $secondsLow;
-        $this->micros = $micros;
-        $this->seq = $seq;
-        $this->pid = $pid;
-        $this->server = $server;
-    }
-
     public static function get(?DateTime $time = null): self
     {
 
@@ -100,45 +76,8 @@ class MicroUuid implements JsonSerializable
             intval(substr($ms, 2, 6)),
             static::genSeq(),
             static::genPid(),
-            static::genServer()
+            ServerId::get() & self::MASK_SERVER
         );
-    }
-
-    protected static function genSeq(): int
-    {
-        static $seq = 0;
-        $seq = ($seq + 1) & self::MASK_SEQ;
-
-        return $seq;
-    }
-
-    protected static function genPid(): int
-    {
-        static $pid = null;
-        if (is_null($pid)) {
-            $pid = getmypid() & self::MASK_PID;
-        }
-
-        return $pid;
-    }
-
-    protected static function genServer(): int
-    {
-        if (empty(self::$defaultServer)) {
-            /**
-             * it is recommended to add SERVER_ID=[0-65535] in /etc/environment
-             */
-            $sid = getenv('SERVER_ID');
-            if ($sid !== false && is_numeric($sid)) {
-                self::$defaultServer = intval($sid) & self::MASK_SERVER;
-            } elseif (file_exists('/etc/machine-id')) {
-                self::$defaultServer = crc32(file_get_contents('/etc/machine-id')) & self::MASK_SERVER;
-            } else {
-                self::$defaultServer = crc32(php_uname('a')) & self::MASK_SERVER;
-            }
-        }
-
-        return self::$defaultServer;
     }
 
     /**
@@ -192,30 +131,6 @@ class MicroUuid implements JsonSerializable
     }
 
     /**
-     * Create from standart UUID
-     *
-     * @param Uuid $uuid
-     * @return static
-     */
-    public static function fromUuid(Uuid $uuid): self
-    {
-
-        list($ms, $ts) = explode(' ', $uuid->getMicrotime());
-        $hexTs = base_convert($ts, 10, 16);
-        $hexTs = str_pad($hexTs, 8, '0', STR_PAD_LEFT);
-
-        return new static(
-            hexdec(substr($hexTs, 0, 4)),
-            hexdec(substr($hexTs, 4, 8)),
-            intval(substr($ms, 2, 6)),
-            $uuid->getSeq() & self::MASK_SEQ,
-            ($uuid->getNode() >> 26) & self::MASK_PID,
-            $uuid->getNode() & self::MASK_SERVER
-        );
-    }
-
-
-    /**
      * Check string to be correct MicroUuid
      *
      * @param string $str
@@ -224,6 +139,22 @@ class MicroUuid implements JsonSerializable
     public static function validateString(string $str): bool
     {
         return (bool)preg_match('/^[0-9a-f]{8}-[0-9a-f]{5}-[0-9a-f]{7}-[0-9a-f]{4}$/i', $str);
+    }
+
+    protected function __construct(
+        int $secondsHigh,
+        int $secondsLow,
+        int $micros,
+        int $seq,
+        int $pid,
+        int $server
+    ) {
+        $this->secondsHigh = $secondsHigh;
+        $this->secondsLow = $secondsLow;
+        $this->micros = $micros;
+        $this->seq = $seq;
+        $this->pid = $pid;
+        $this->server = $server;
     }
 
     public function getSeq(): int
@@ -251,7 +182,7 @@ class MicroUuid implements JsonSerializable
         /** @see ::isValid() */
         $seconds = base_convert(sprintf('%04x%04x', $this->secondsHigh, $this->secondsLow), 16, 10);
 
-        $timestamp = sprintf('%s.%06d', $seconds, min(999999, $this->micros));
+        $timestamp = sprintf('%s.%06d', $seconds, min(1e6-1, $this->micros));
 
         return DateTime::createFromFormat('U.u', $timestamp);
     }
@@ -296,17 +227,13 @@ class MicroUuid implements JsonSerializable
     /**
      * Is MicroUuid valid
      * if randomly generated there is ~5% chance to obtain not valid microsecond
-     * can`t be generated and could only be in created by ::from*($str) methods
+     * invalid MicroUuid can`t be generated and could only be in created by ::from*($str) methods
      *
      * @return bool
      */
     public function isValid(): bool
     {
-        if ($this->micros > 999999) {
-            return false;
-        }
-
-        return true;
+        return $this->micros < 1e6;
     }
 
     /**
@@ -338,5 +265,23 @@ class MicroUuid implements JsonSerializable
     public function jsonSerialize()
     {
         return $this->toString();
+    }
+
+    protected static function genSeq(): int
+    {
+        static $seq = 0;
+        $seq = ($seq + 1) & self::MASK_SEQ;
+
+        return $seq;
+    }
+
+    protected static function genPid(): int
+    {
+        static $pid = null;
+        if (is_null($pid)) {
+            $pid = getmypid() & self::MASK_PID;
+        }
+
+        return $pid;
     }
 }

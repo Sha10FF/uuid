@@ -32,30 +32,12 @@ namespace UUID {
             $time = $uuid1->getTime();
             $server = rand(0, 0xffff);
 
-            MicroUuid::$defaultServer = $server;
+            ServerId::set($server);
             $uuid2 = MicroUuid::get($time);
             $this->assertEquals($uuid2->getTime(), $time);
             $this->assertEquals($uuid2->getServer(), $server);
             $this->assertEquals($uuid1->getPid(), $uuid2->getPid());
             $this->assertEquals($uuid1->getSeq() + 1, $uuid2->getSeq());
-        }
-
-        public function testServer()
-        {
-            MicroUuid::$defaultServer = null;
-            $uuid = MicroUuid::get();
-            $this->assertEquals(crc32(php_uname('a')) & 0xffff, $uuid->getServer());
-
-            MicroUuid::$defaultServer = null;
-            file_exists('/etc/machine-id', true);
-            $uuid2 = MicroUuid::get();
-            $this->assertEquals(crc32('test') & 0xffff, $uuid2->getServer());
-
-            MicroUuid::$defaultServer = null;
-            $srv = rand(0, 0xffff);
-            putenv("SERVER_ID={$srv}");
-            $uuid3 = MicroUuid::get();
-            $this->assertEquals($srv, $uuid3->getServer());
         }
 
         public function testValidators()
@@ -76,6 +58,9 @@ namespace UUID {
             $this->assertFalse($invalid->isValid());
             $this->assertFalse($invalid->isOk());
 
+            $invalid1e6 = MicroUuid::fromString('00000000-f4240-0000000-0000');
+            $this->assertFalse($invalid1e6->isValid());
+
             $this->assertFalse(MicroUuid::validateString('bullshit'));
             $this->assertFalse(MicroUuid::validateString('12345678-9abcd-baddata-1234'));
             $this->assertTrue(MicroUuid::validateString($invalid->toString()));
@@ -88,6 +73,7 @@ namespace UUID {
             $date2 = new \DateTime('2038-02-01');
             $uuid1 = MicroUuid::get($date1);
             $uuid2 = MicroUuid::get($date2);
+            $this->assertEquals($date1, $uuid1->getTime());
             $this->assertEquals($date2, $uuid2->getTime());
             $this->assertTrue(strcmp($uuid2->toString(), $uuid1->toString()) > 0);
         }
@@ -99,6 +85,7 @@ namespace UUID {
         if ($set) {
             $data[$name] = $set;
         }
+
         return $data[$name] ?? false;
     }
 
