@@ -78,19 +78,4 @@ namespace UUID {
             $this->assertTrue(strcmp($uuid2->toString(), $uuid1->toString()) > 0);
         }
     }
-
-    function file_exists($name, $set = null)
-    {
-        static $data = [];
-        if ($set) {
-            $data[$name] = $set;
-        }
-
-        return $data[$name] ?? false;
-    }
-
-    function file_get_contents()
-    {
-        return 'test';
-    }
 }

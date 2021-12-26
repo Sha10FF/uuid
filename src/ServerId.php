@@ -5,7 +5,7 @@ namespace UUID;
 abstract class ServerId
 {
     /** @var int */
-    protected static $id;
+    public static $id;
 
     public static function get(): int
     {
@@ -14,12 +14,14 @@ abstract class ServerId
         }
         $sid = getenv('SERVER_ID');
         if ($sid !== false && is_numeric($sid)) {
-            return self::$id = $sid;
+            self::$id = $sid;
         } elseif (file_exists('/etc/machine-id')) {
-            return self::$id = crc32(file_get_contents('/etc/machine-id'));
+            self::$id = crc32(file_get_contents('/etc/machine-id'));
         } else {
-            return self::$id = crc32(php_uname('a'));
+            self::$id = crc32(php_uname('a'));
         }
+
+        return self::$id;
     }
 
     public static function set(int $id): void
