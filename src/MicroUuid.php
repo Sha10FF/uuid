@@ -7,8 +7,6 @@ use JsonSerializable;
 
 class MicroUuid implements JsonSerializable
 {
-    protected const MASK_TS = 0xffff;     // 16 bit
-    protected const MASK_MS = 0xfffff;    // 20 bit
     protected const MASK_SEQ = 0x3f;      //  6 bit
     protected const MASK_PID = 0x3fffff;  // 22 bit
     protected const MASK_SERVER = 0xffff; // 16 bit
