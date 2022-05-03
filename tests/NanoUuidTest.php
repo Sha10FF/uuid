@@ -2,6 +2,7 @@
 
 namespace UUID {
 
+    use DateTime;
     use PHPUnit\Framework\TestCase;
 
     class NanoUuidTest extends TestCase
@@ -54,8 +55,8 @@ namespace UUID {
 
         public function testY2038()
         {
-            $date1 = new \DateTime('2038-01-01');
-            $date2 = new \DateTime('2038-02-01');
+            $date1 = new DateTime('2038-01-01');
+            $date2 = new DateTime('2038-02-01');
             $uuid1 = NanoUuid::get($date1);
             $uuid2 = NanoUuid::get($date2);
             $this->assertEquals($date1, $uuid1->getTime());

@@ -2,12 +2,14 @@
 
 namespace UUID {
 
+    use PHPUnit\Framework\TestCase;
+
     function socket_create()
     {
 
     }
 
-    class UuidTest extends \PHPUnit\Framework\TestCase
+    class UuidTest extends TestCase
     {
         public function testCreate()
         {
