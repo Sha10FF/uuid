@@ -12,6 +12,7 @@ namespace UUID {
             $uuid2 = NanoUuid::get($uuid1->getTime());
             $this->assertNotEquals($uuid1, $uuid2);
             $this->assertEquals($uuid1->getTime(), $uuid2->getTime());
+            $this->assertEquals($uuid1->getTimestamp(), $uuid2->getTimestamp());
 
             $uuid0 = NanoUuid::fromString($uuid1);
             $this->assertEquals($uuid0, $uuid1);
@@ -21,6 +22,12 @@ namespace UUID {
 
             $uuid0 = NanoUuid::fromBase64($uuid1->toBase64());
             $this->assertEquals($uuid0, $uuid1);
+
+            //only for x64 or more
+            if(PHP_INT_SIZE >= 8) {
+                $uuid0 = NanoUuid::fromBigInt($uuid1->toBigInt());
+                $this->assertEquals($uuid0, $uuid1);
+            }
 
             $uuid0 = NanoUuid::fromString(json_decode(json_encode($uuid1)));
             $this->assertEquals($uuid0, $uuid1);
@@ -41,7 +48,7 @@ namespace UUID {
         {
             $null = NanoUuid::fromString("");
             $this->assertTrue($null->isNull());
-            $this->assertTrue(NanoUuid::validateString("1234567-89abcdef0"));
+            $this->assertTrue(NanoUuid::validateString("12345678-9abcdef0"));
             $this->assertFalse(NanoUuid::validateString("bullshit"));
         }
 

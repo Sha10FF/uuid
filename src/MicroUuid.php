@@ -180,7 +180,7 @@ class MicroUuid implements JsonSerializable
         /** @see ::isValid() */
         $seconds = base_convert(sprintf('%04x%04x', $this->secondsHigh, $this->secondsLow), 16, 10);
 
-        $timestamp = sprintf('%s.%06d', $seconds, min(1e6-1, $this->micros));
+        $timestamp = sprintf('%s.%06d', $seconds, min(1e6 - 1, $this->micros));
 
         return DateTime::createFromFormat('U.u', $timestamp);
     }

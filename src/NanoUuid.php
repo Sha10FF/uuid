@@ -7,7 +7,7 @@ use JsonSerializable;
 
 class NanoUuid implements JsonSerializable
 {
-    protected const MASK_SEQ = 0x3ff;      //  10bit
+    protected const MASK_SEQ = 0x3ff;     // 10bit
     protected const MASK_PID = 0x3fffff;  // 22bit
     protected const FORMAT = '%08x-%08x';
     public const NULL = '00000000-00000000';
@@ -21,6 +21,12 @@ class NanoUuid implements JsonSerializable
     /** @var int 22bit */
     protected $pid;
 
+    /**
+     * Natural way to generate correct NanoUuid
+     *
+     * @param DateTime|null $time
+     * @return static
+     */
     public static function get(?DateTime $time = null): self
     {
 
@@ -85,6 +91,21 @@ class NanoUuid implements JsonSerializable
     }
 
     /**
+     * Create from int64 presentation of NanoUuid
+     * works correct only for x64 platforms
+     *
+     * @param int $uuid
+     * @return static
+     */
+    public static function fromBigInt(int $uuid): self {
+        $str = str_pad(dechex($uuid), 16, '0', STR_PAD_LEFT);
+        $ts = substr($str, 0, 8);
+        $seqPid = substr($str, 8, 8);
+
+        return static::fromString($ts . '-' . $seqPid);
+    }
+
+    /**
      * Check string to be correct
      *
      * @param string $str
@@ -92,7 +113,7 @@ class NanoUuid implements JsonSerializable
      */
     public static function validateString(string $str): bool
     {
-        return (bool) preg_match('/^[0-9a-f]{8}\-[0-9a-f]{8}$/i', $str);
+        return (bool)preg_match('/^[0-9a-f]{8}\-[0-9a-f]{8}$/i', $str);
     }
 
     protected function __construct(
@@ -105,18 +126,30 @@ class NanoUuid implements JsonSerializable
         $this->pid = $pid;
     }
 
+    /**
+     * Sequence
+     * 10 bit
+     *
+     * @return int
+     */
     public function getSeq(): int
     {
         return $this->seq;
     }
 
+    /**
+     * Linux pid
+     * 22 bit
+     *
+     * @return int
+     */
     public function getPid(): int
     {
         return $this->pid;
     }
 
     /**
-     * Extract time from MicroUuid
+     * Extract DateTime from NanoUuid
      *
      * @return DateTime
      */
@@ -126,7 +159,16 @@ class NanoUuid implements JsonSerializable
     }
 
     /**
-     * Check MicroUuid is equal to reserved value for NULL
+     * Get timestamp (sec)
+     *
+     * @return int
+     */
+    public function getTimestamp(): int {
+        return $this->ts;
+    }
+
+    /**
+     * Check NanoUuid is equal to reserved value for NULL
      *
      * @return bool
      */
@@ -137,7 +179,7 @@ class NanoUuid implements JsonSerializable
 
     /**
      * Hex NanoUuid presentation
-     * "01234567-89abcdef0"
+     * "01234567-89abcdef"
      *
      * @return string 17 chars
      */
@@ -150,7 +192,7 @@ class NanoUuid implements JsonSerializable
     }
 
     /**
-     * Base64 encoded binary MicroUuid
+     * Base64 encoded binary NanoUuid
      * "YF+MLyVXwECNZ0PA"
      *
      * @return string 11 chars
@@ -161,13 +203,23 @@ class NanoUuid implements JsonSerializable
     }
 
     /**
-     * Binary MicroUuid
+     * Binary NanoUuid
      *
      * @return string 8 chars
      */
     public function toBinary(): string
     {
         return hex2bin(str_replace('-', '', $this->toString()));
+    }
+
+    /**
+     * Int64 presentation of  NanoUuid
+     * works correct only for x64 platforms
+     *
+     * @return int
+     */
+    public function toBigInt(): int {
+        return hexdec(str_replace('-', '', $this->toString()));
     }
 
     public function __toString(): string

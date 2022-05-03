@@ -21,10 +21,12 @@ class Uuid implements JsonSerializable
      * @var int 16 bit
      */
     protected $timeLow;
+
     /**
      * @var int 16 bit
      */
     protected $timeMid;
+
     /**
      * @var int 28 bit
      */
@@ -54,27 +56,6 @@ class Uuid implements JsonSerializable
      * @var int 24 bit
      */
     protected $nodeLow;
-
-    protected function __construct(
-        int $timeLow,
-        int $timeMid,
-        int $timeHigh,
-        int $version,
-        int $variant,
-        int $seq,
-        int $nodeHi,
-        int $nodeLow
-    )
-    {
-        $this->timeLow = $timeLow;
-        $this->timeMid = $timeMid;
-        $this->timeHigh = $timeHigh;
-        $this->version = $version;
-        $this->variant = $variant;
-        $this->seq = $seq;
-        $this->nodeHi = $nodeHi;
-        $this->nodeLow = $nodeLow;
-    }
 
     /**
      * @param string $str
@@ -153,23 +134,6 @@ class Uuid implements JsonSerializable
     }
 
     /**
-     * @param $version
-     * @param $variant
-     * @param DateTime|int $time
-     * @return Uuid
-     */
-    protected static function genTimeUuid(int $version, int $variant, $time = null): Uuid
-    {
-        if (!is_int($time)) {
-            $time = static::rfc4122Timestamp($time);
-        }
-        $seq = static::genSeq() & (0x7fff >> $variant);
-        $node = static::genNode();
-
-        return new static($time, $version, $variant, $seq, $node);
-    }
-
-    /**
      * rfc4122 60-bit timestamp * in (100ns) since 15 October 1582
      *
      * @param DateTime
@@ -189,58 +153,29 @@ class Uuid implements JsonSerializable
         return self::TIMESTAMP_DIFF + ($ts * 1000000 + intval(substr($ms, 2))) * 10;
     }
 
-    /**
-     * @return int
-     */
-    protected static function genSeq(): int
-    {
-        static $seq = 0;
-        $seq = ($seq + 1) & 0x7fff; //15bit max
-
-        return $seq;
-    }
-
-    /**
-     * @return int
-     */
-    protected static function genNode(): int
-    {
-        return self::getMac();
-    }
-
-    /**
-     * @return int
-     */
-    protected static function getMac(): int
-    {
-        $res = shell_exec('ip link');
-        if (preg_match_all('/link\/\w+\s+(?<mac>([\da-f]{2}:){5}[\da-f]{2})/im', $res, $found, PREG_SET_ORDER)) {
-            foreach ($found as $item) {
-                $mac = (int)base_convert(str_replace(':', '', $item['mac']), 16, 10);
-                if ($mac && $mac < (1 << 48) - 1) {
-                    return $mac;
-                }
-            }
-        }
-
-        return 0;
-    }
-
     public static function uuid4(): Uuid
     {
         return static::genRandomUuid(4, 1);
     }
 
-    protected static function genRandomUuid(int $version, int $variant): Uuid
-    {
-        $timeLow = rand(0, (1 << 16) - 1);
-        $timeMid = rand(0, (1 << 16) - 1);
-        $timeHigh = rand(0, (1 << 28) - 1);
-        $seq = rand(0, (1 << 15 - $variant) - 1);
-        $nodeHi = rand(0, (1 << 24) - 1);
-        $nodeLow = rand(0, (1 << 24) - 1);
-
-        return new static($timeLow, $timeMid, $timeHigh, $version, $variant, $seq, $nodeHi, $nodeLow);
+    protected function __construct(
+        int $timeLow,
+        int $timeMid,
+        int $timeHigh,
+        int $version,
+        int $variant,
+        int $seq,
+        int $nodeHi,
+        int $nodeLow
+    ) {
+        $this->timeLow = $timeLow;
+        $this->timeMid = $timeMid;
+        $this->timeHigh = $timeHigh;
+        $this->version = $version;
+        $this->variant = $variant;
+        $this->seq = $seq;
+        $this->nodeHi = $nodeHi;
+        $this->nodeLow = $nodeLow;
     }
 
     public function getDateTime(): DateTime
@@ -270,7 +205,6 @@ class Uuid implements JsonSerializable
         return '0.' . $ms . ' ' . $ts;
     }
 
-
     /**
      * @return int
      */
@@ -294,7 +228,6 @@ class Uuid implements JsonSerializable
     {
         return $this->seq;
     }
-
 
     /**
      * Base64 encoded binary Uuid
@@ -358,5 +291,71 @@ class Uuid implements JsonSerializable
     public function jsonSerialize()
     {
         return $this->toString();
+    }
+
+    /**
+     * @param $version
+     * @param $variant
+     * @param DateTime|int $time
+     * @return Uuid
+     */
+    protected static function genTimeUuid(int $version, int $variant, $time = null): Uuid
+    {
+        if (!is_int($time)) {
+            $time = static::rfc4122Timestamp($time);
+        }
+        $seq = static::genSeq() & (0x7fff >> $variant);
+        $node = static::genNode();
+
+        return new static($time, $version, $variant, $seq, $node);
+    }
+
+    /**
+     * @return int
+     */
+    protected static function genSeq(): int
+    {
+        static $seq = 0;
+        $seq = ($seq + 1) & 0x7fff; //15bit max
+
+        return $seq;
+    }
+
+    /**
+     * @return int
+     */
+    protected static function genNode(): int
+    {
+        return self::getMac();
+    }
+
+    /**
+     * @return int
+     */
+    protected static function getMac(): int
+    {
+        $res = shell_exec('ip link');
+        if (preg_match_all('/link\/\w+\s+(?<mac>([\da-f]{2}:){5}[\da-f]{2})/im', $res, $found, PREG_SET_ORDER)) {
+            foreach ($found as $item) {
+                $mac = (int)base_convert(str_replace(':', '', $item['mac']), 16, 10);
+                if ($mac && $mac < (1 << 48) - 1) {
+                    return $mac;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    protected static function genRandomUuid(int $version, int $variant): Uuid
+    {
+        $timeLow = rand(0, (1 << 16) - 1);
+        $timeMid = rand(0, (1 << 16) - 1);
+        $timeHigh = rand(0, (1 << 28) - 1);
+        $seq = rand(0, (1 << 15 - $variant) - 1);
+        $nodeHi = rand(0, (1 << 24) - 1);
+        $nodeLow = rand(0, (1 << 24) - 1);
+
+        return new static($timeLow, $timeMid, $timeHigh, $version, $variant, $seq, $nodeHi, $nodeLow);
     }
 }
