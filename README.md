@@ -24,12 +24,16 @@ or :
     `XgIkWjPAYEAaHQAA` - base64 encoded binary (16 chars)
 
  It need only **BINARY(12)** column to store, correctly sortable (by time with micros) 
- (hex string and base64 presentation is correctly sortable as well)
+ (hex string and base64 presentation are correctly sortable as well)
 
 ### ServerId
-If you use multiple servers it is highly recommended to add unique `SERVER_ID=[0-65535]` in /etc/environment
+If you use multiple servers it is highly recommended to add unique `SERVER_ID=[0-65535]` in **/etc/environment**
 (You could also find useful to add `SERVER_ROLE=[PROD|TEST|DEV]` as well)
 Or just add in config:
 `MicroUuid::$defaultServer = 12345;`
 
 Alternative methods will be used for generating machine dependent _server id_ if you not set it directly.
+
+### Uuid
+Simple and correct RFC4122 uuid. Works with any possible variant and 32bit save unlike other popular libs.
+
